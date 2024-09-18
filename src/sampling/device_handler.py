@@ -144,8 +144,23 @@ class BaseDeviceHandler(AppNotifierBase):
 
 
 class DemoDeviceHandler(BaseDeviceHandler):
-    def __init__(self):
-        super().__init__()
+    def __init__(
+        self,
+        app: App,
+        name: str,
+        device_adress: str,
+        on_update: Callable[
+            [
+                List[float],
+                List[float],
+                List[float],
+                List[float],
+            ],
+            None,
+        ],
+        on_terminated: Callable[[], None],
+    ) -> None:
+        super().__init__(app, name, device_adress, on_update, on_terminated)
         # Variables for Individual Motion Interval Extraction
         self.finished = False
         self.threshold_for_gyro_l2norm = 35
