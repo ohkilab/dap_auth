@@ -1,9 +1,15 @@
 import pandas as pd
 
+from enum import Enum
 from datetime import datetime
 
 from util.app import App
-from device_handler import DeviceHandler
+from .device_handler import BaseDeviceHandler, DemoDeviceHandler
+
+
+class SamplingMode(Enum):
+    SAMPLING = 0
+    DEMO = 1
 
 
 class PairDataSampler:
@@ -13,24 +19,33 @@ class PairDataSampler:
         device2_name: str,
         device1_address: str,
         device2_address: str,
+        mode: SamplingMode = SamplingMode.SAMPLING,
     ):
         self.app = App()
         self.device1_name = device1_name
         self.device2_name = device2_name
         self.device1_address = device1_address
         self.device2_address = device2_address
+        self.mode = mode
 
         self.device1_finished = False
         self.device2_finished = False
 
-        self.device1_handler = DeviceHandler(
+        if mode == SamplingMode.DEMO:
+            handler = DemoDeviceHandler
+        elif mode == SamplingMode.SAMPLING:
+            handler = BaseDeviceHandler
+        else:
+            raise ValueError("Invalid sampling mode")
+
+        self.device1_handler = handler(
             self.app,
             device1_name,
             device1_address,
             self.on_sensor_update,
             self.on_device1_terminated,
         )
-        self.device2_handler = DeviceHandler(
+        self.device2_handler = handler(
             self.app,
             device2_name,
             device2_address,

@@ -11,10 +11,10 @@ from typing import List, Callable
 
 from util.app import App
 from util.app_notifier import AppNotifierBase
-from device_model import DeviceModel
+from .device_model import DeviceModel
 
 
-class DeviceHandler(AppNotifierBase):
+class BaseDeviceHandler(AppNotifierBase):
     def __init__(
         self,
         app: App,
@@ -54,14 +54,6 @@ class DeviceHandler(AppNotifierBase):
             for pair in product(self.sensor_data_triaxial_labels, ["X", "Y", "Z"])
         ]
         self.sensor_data = np.empty((0, len(self.sensor_data_labels)))
-
-        # Variables for Individual Motion Interval Extraction
-        self.finished = False
-        self.threshold_for_gyro_l2norm = 35
-        self.max_times_to_cross_threshold = 25
-        self.start_idx = None
-        self.start_count = 0
-        self.end_count = 0
 
         # "{}-{}-{} {}:{}:{}:{}".format(year, mon, day, hour, minute, sec, mils),
         self.current_time: str = ""  # Date and time of sensor data acquisition
@@ -112,6 +104,8 @@ class DeviceHandler(AppNotifierBase):
             self.current_angle[i] = device.deviceData[angle_key + xyz_key[i]]
             self.current_mag[i] = device.deviceData[mag_key + xyz_key[i]]
 
+        self.event.set()
+
         # Binding to time series data
         # print(f"Sensor name: {sensor_name}, time: {time}")
         row = np.array([])
@@ -130,24 +124,6 @@ class DeviceHandler(AppNotifierBase):
                 row = np.append(row, self.current_mag)
         self.sensor_data = np.vstack([self.sensor_data, row])
 
-        self.event.set()
-
-        # Conditional determination for individual motion segment extraction
-        gyro_l2norm = np.sqrt(np.sum(np.array(self.current_gyro) ** 2))
-        if self.start_idx is None:
-            if gyro_l2norm >= self.threshold_for_gyro_l2norm:
-                self.start_count += 1
-            if self.start_count == 25:
-                self.start_idx = len(self.sensor_data) - 1
-        else:
-            if gyro_l2norm <= self.threshold_for_gyro_l2norm:
-                self.end_count += 1
-            if self.end_count == 25:
-                self.finished = True
-
-        if self.finished:
-            self.stop()
-
     def get_sensor_data(self):
         df = pd.DataFrame(self.sensor_data, columns=self.sensor_data_labels)
         return df
@@ -165,3 +141,34 @@ class DeviceHandler(AppNotifierBase):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.run_until_complete(self.device.openDevice())
+
+
+class DemoDeviceHandler(BaseDeviceHandler):
+    def __init__(self):
+        super().__init__()
+        # Variables for Individual Motion Interval Extraction
+        self.finished = False
+        self.threshold_for_gyro_l2norm = 35
+        self.max_times_to_cross_threshold = 25
+        self.start_idx = None
+        self.start_count = 0
+        self.end_count = 0
+
+    def updateData(self, device: DeviceModel):
+        super().updateData(device)
+
+        # Conditional determination for individual motion segment extraction
+        gyro_l2norm = np.sqrt(np.sum(np.array(self.current_gyro) ** 2))
+        if self.start_idx is None:
+            if gyro_l2norm >= self.threshold_for_gyro_l2norm:
+                self.start_count += 1
+            if self.start_count == 25:
+                self.start_idx = len(self.sensor_data) - 1
+        else:
+            if gyro_l2norm <= self.threshold_for_gyro_l2norm:
+                self.end_count += 1
+            if self.end_count == 25:
+                self.finished = True
+
+        if self.finished:
+            self.stop()
