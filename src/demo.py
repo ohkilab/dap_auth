@@ -1,4 +1,4 @@
-from sampling.data_sampler import PairDataSampler
+from sampling.data_sampler import PairDataSampler, SamplingMode
 
 import faulthandler
 import tracemalloc
@@ -6,7 +6,13 @@ import tracemalloc
 
 def sampling(user1_name, user2_name, device1_address, device2_address):
 
-    sampler = PairDataSampler(user1_name, user2_name, device1_address, device2_address)
+    sampler = PairDataSampler(
+        user1_name,
+        user2_name,
+        device1_address,
+        device2_address,
+        mode=SamplingMode.DEMO,
+    )
     sampler.run()
     device1_data, device2_data = sampler.get_data()
     device1_data.to_csv(f"{user1_name}.csv")
@@ -25,7 +31,10 @@ def main():
     device2_address = "F76B7A81-43CD-5515-B7C3-997B6847F307"
 
     device1_data, device2_data = sampling(
-        user1_name, user2_name, device1_address, device2_address
+        user1_name,
+        user2_name,
+        device1_address,
+        device2_address,
     )
 
 
