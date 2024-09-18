@@ -1,2 +1,4 @@
 defaults:
   - devices: black_blue_band
+
+output_dir_path: "data/sensor_data"
