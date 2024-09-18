@@ -1,4 +1,4 @@
-from data_sampler import PairDataSampler
+from sampling.data_sampler import PairDataSampler
 import faulthandler
 import tracemalloc
 
