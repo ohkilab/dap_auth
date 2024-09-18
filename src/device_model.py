@@ -5,6 +5,10 @@ import struct
 import bleak
 import asyncio
 
+from logging import getLogger
+
+default_logger = getLogger(__name__)
+
 # https://github.com/WITMOTION/WitBluetooth_BWT901C
 
 
@@ -25,8 +29,10 @@ class DeviceModel:
 
     # endregion
 
-    def __init__(self, deviceName, mac, callback_method):
-        print("Initialize device model")
+    def __init__(self, deviceName, mac, callback_method, logger=default_logger):
+        self.logger = logger
+        self.logger.debug("Initialize device model")
+
         # 设备名称（自定义） Device Name
         self.deviceName = deviceName
         self.mac = mac
@@ -59,7 +65,7 @@ class DeviceModel:
 
     # 打开设备 open Device
     async def openDevice(self):
-        print("Opening device......")
+        self.logger.debug("Opening device......")
         # 获取设备的服务和特征 Obtain the services and characteristic of the device
         async with bleak.BleakClient(self.mac) as client:
             self.client = client
@@ -70,12 +76,12 @@ class DeviceModel:
             target_characteristic_uuid_write = "49535343-8841-43f4-a8d4-ecbe34729bb3"
             notify_characteristic = None
 
-            print("Matching services......")
+            self.logger.debug("Matching services......")
             # 匹配服务和特征值 Matching services and characteristic values
             for service in client.services:
                 if service.uuid == target_service_uuid:
-                    print(f"Service: {service}")
-                    print("Matching characteristic......")
+                    self.logger.debug(f"Service: {service}")
+                    self.logger.debug("Matching characteristic......")
                     for characteristic in service.characteristics:
                         if characteristic.uuid == target_characteristic_uuid_read:
                             notify_characteristic = characteristic
@@ -88,7 +94,8 @@ class DeviceModel:
                 pass
 
             if notify_characteristic:
-                print(f"Characteristic: {notify_characteristic}")
+                self.logger.info("The device is turned on")
+                self.logger.debug(f"Characteristic: {notify_characteristic}")
                 # 设置通知以接收数据 Set up notifications to receive data
                 await client.start_notify(
                     notify_characteristic.uuid, self.onDataReceived
@@ -103,14 +110,14 @@ class DeviceModel:
                 finally:
                     # 在退出时停止通知 Stop notification on exit
                     await client.stop_notify(notify_characteristic.uuid)
-                    print("stop notify")
+                    self.logger.debug("stop notify")
             else:
-                print("No matching services or characteristic found")
+                self.logger.warning("No matching services or characteristic found")
 
     # 关闭设备  close Device
     def closeDevice(self):
         self.isOpen = False
-        print("The device is turned off")
+        self.logger.info("The device is turned off")
 
     # region 数据解析 data analysis
     # 串口数据处理  Serial port data processing
@@ -201,7 +208,7 @@ class DeviceModel:
                     self.writer_characteristic.uuid, bytes(data)
                 )
         except Exception as ex:
-            print(ex)
+            self.logger.error(ex)
 
     # 读取寄存器 read register
     async def readReg(self, regAddr):
