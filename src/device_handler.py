@@ -55,6 +55,14 @@ class DeviceHandler(AppNotifierBase):
         ]
         self.sensor_data = np.empty((0, len(self.sensor_data_labels)))
 
+        # Variables for Individual Motion Interval Extraction
+        self.finished = False
+        self.threshold_for_gyro_l2norm = 35
+        self.max_times_to_cross_threshold = 25
+        self.start_idx = None
+        self.start_count = 0
+        self.end_count = 0
+
         # "{}-{}-{} {}:{}:{}:{}".format(year, mon, day, hour, minute, sec, mils),
         self.current_time: str = ""  # Date and time of sensor data acquisition
 
@@ -97,17 +105,17 @@ class DeviceHandler(AppNotifierBase):
 
         self.current_time = datetime.datetime.now()
 
-        # 現在取得したデータの更新
+        # Update currently acquired data
         for i in range(len(xyz_key)):
             self.current_acc[i] = device.deviceData[acc_key + xyz_key[i]]
             self.current_gyro[i] = device.deviceData[gyro_key + xyz_key[i]]
             self.current_angle[i] = device.deviceData[angle_key + xyz_key[i]]
             self.current_mag[i] = device.deviceData[mag_key + xyz_key[i]]
 
-        # 時系列データへの結合
+        # Binding to time series data
         # print(f"Sensor name: {sensor_name}, time: {time}")
         row = np.array([])
-        # ラベル順の結合
+        # Combine by label order
         for basic_label in self.sensor_data_basic_labels:
             if basic_label == "time":
                 row = np.append(row, self.current_time)
@@ -124,6 +132,22 @@ class DeviceHandler(AppNotifierBase):
 
         self.event.set()
 
+        # Conditional determination for individual motion segment extraction
+        gyro_l2norm = np.sqrt(np.sum(np.array(self.current_gyro) ** 2))
+        if self.start_idx is None:
+            if gyro_l2norm >= self.threshold_for_gyro_l2norm:
+                self.start_count += 1
+            if self.start_count == 25:
+                self.start_idx = len(self.sensor_data) - 1
+        else:
+            if gyro_l2norm <= self.threshold_for_gyro_l2norm:
+                self.end_count += 1
+            if self.end_count == 25:
+                self.finished = True
+
+        if self.finished:
+            self.stop()
+
     def get_sensor_data(self):
         df = pd.DataFrame(self.sensor_data, columns=self.sensor_data_labels)
         return df
@@ -137,7 +161,7 @@ class DeviceHandler(AppNotifierBase):
         self.on_terminated(self.name)
 
     def _run_thread(self):
-        # データ取得は別スレッドで
+        # Data is retrieved in a separate thread.
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.run_until_complete(self.device.openDevice())

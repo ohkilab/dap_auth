@@ -1,7 +1,5 @@
-import numpy as np
 import pandas as pd
 
-from itertools import product
 from datetime import datetime
 
 from util.app import App
@@ -30,14 +28,14 @@ class PairDataSampler:
             device1_name,
             device1_address,
             self.on_sensor_update,
-            self.on_sensor_terminated,
+            self.on_device1_terminated,
         )
         self.device2_handler = DeviceHandler(
             self.app,
             device2_name,
             device2_address,
             self.on_sensor_update,
-            self.on_sensor_terminated,
+            self.on_device2_terminated,
         )
 
     def run(self):
@@ -53,6 +51,8 @@ class PairDataSampler:
             print("stop sampling")
 
         finally:
+            # Device normally terminates when each of its own termination conditions are met
+            # If the device terminates abnormally, have the device follow normal termination procedures.
             if not self.device1_finished:
                 self.device1_handler.stop()
             if not self.device2_finished:
@@ -65,12 +65,12 @@ class PairDataSampler:
         )
 
     def _check_finished(self):
+        # Check if two devices are terminated
         if self.device1_finished and self.device2_finished:
             self.app.stop()
         else:
             self.app.add_event(self._check_finished)
 
-    # DeviceHandlerでセンサデータが更新された時にuser_dataを更新
     def on_sensor_update(
         self,
         sensor_name: str,
@@ -82,5 +82,8 @@ class PairDataSampler:
     ):
         pass
 
-    def on_sensor_terminated(self, sensor_name: str):
-        pass
+    def on_device1_terminated(self, sensor_name: str):
+        self.device1_finished = True
+
+    def on_device2_terminated(self, sensor_name: str):
+        self.device2_finished = True
