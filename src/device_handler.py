@@ -1,12 +1,17 @@
 import asyncio
 from threading import Thread
+
+from itertools import product
+
+import numpy as np
+import pandas as pd
 import datetime
+
+from typing import List, Callable
 
 from util.app import App
 from util.app_notifier import AppNotifierBase
 from device_model import DeviceModel
-
-from typing import List, Callable
 
 
 class DeviceHandler(AppNotifierBase):
@@ -34,6 +39,21 @@ class DeviceHandler(AppNotifierBase):
         self.on_terminated = on_terminated
 
         self.thread = Thread(target=self._run_thread)
+
+        self.sensor_data_basic_labels = [
+            "time",
+        ]
+        self.sensor_data_triaxial_labels = [
+            "acc",
+            "gyro",
+            "mag",
+            "angle",
+        ]
+        self.sensor_data_labels = self.sensor_data_basic_labels + [
+            "".join(pair)
+            for pair in product(self.sensor_data_triaxial_labels, ["X", "Y", "Z"])
+        ]
+        self.sensor_data = np.empty((0, len(self.sensor_data_labels)))
 
         # "{}-{}-{} {}:{}:{}:{}".format(year, mon, day, hour, minute, sec, mils),
         self.current_time: str = ""  # Date and time of sensor data acquisition
@@ -77,12 +97,36 @@ class DeviceHandler(AppNotifierBase):
 
         self.current_time = datetime.datetime.now()
 
+        # 現在取得したデータの更新
         for i in range(len(xyz_key)):
             self.current_acc[i] = device.deviceData[acc_key + xyz_key[i]]
             self.current_gyro[i] = device.deviceData[gyro_key + xyz_key[i]]
             self.current_angle[i] = device.deviceData[angle_key + xyz_key[i]]
             self.current_mag[i] = device.deviceData[mag_key + xyz_key[i]]
+
+        # 時系列データへの結合
+        # print(f"Sensor name: {sensor_name}, time: {time}")
+        row = np.array([])
+        # ラベル順の結合
+        for basic_label in self.sensor_data_basic_labels:
+            if basic_label == "time":
+                row = np.append(row, self.current_time)
+        for triaxial_label in self.sensor_data_triaxial_labels:
+            if triaxial_label == "acc":
+                row = np.append(row, self.current_acc)
+            elif triaxial_label == "gyro":
+                row = np.append(row, self.current_gyro)
+            elif triaxial_label == "angle":
+                row = np.append(row, self.current_angle)
+            elif triaxial_label == "mag":
+                row = np.append(row, self.current_mag)
+        self.sensor_data = np.vstack([self.sensor_data, row])
+
         self.event.set()
+
+    def get_sensor_data(self):
+        df = pd.DataFrame(self.sensor_data, columns=self.sensor_data_labels)
+        return df
 
     def start(self):
         super().start()
