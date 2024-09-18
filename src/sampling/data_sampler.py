@@ -3,7 +3,7 @@ import pandas as pd
 from enum import Enum
 from datetime import datetime
 
-from util.app import App
+from .util.app import App
 from .device_handler import BaseDeviceHandler, DemoDeviceHandler
 
 

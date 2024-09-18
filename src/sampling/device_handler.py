@@ -9,8 +9,8 @@ import datetime
 
 from typing import List, Callable
 
-from util.app import App
-from util.app_notifier import AppNotifierBase
+from .util.app import App
+from .util.app_notifier import AppNotifierBase
 from .device_model import DeviceModel
 
 
