@@ -32,3 +32,4 @@ class App:
                 continue
             event = self._event_queue.get()
             event()
+            self._event_queue.task_done()
