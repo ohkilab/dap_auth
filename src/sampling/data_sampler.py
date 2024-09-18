@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 
 from enum import Enum
@@ -28,6 +30,8 @@ class PairDataSampler:
         self.device2_address = device2_address
         self.mode = mode
 
+        self.start_date = None
+
         self.device1_finished = False
         self.device2_finished = False
 
@@ -55,6 +59,7 @@ class PairDataSampler:
 
     def run(self):
         try:
+            self.start_date = datetime.now()
             self.device1_handler.start()
             self.device2_handler.start()
             self.app.add_event(self._check_finished)
@@ -72,12 +77,6 @@ class PairDataSampler:
                 self.device1_handler.stop()
             if not self.device2_finished:
                 self.device2_handler.stop()
-
-    def get_data(self) -> tuple[pd.DataFrame, pd.DataFrame]:
-        return (
-            self.device1_handler.get_sensor_data(),
-            self.device2_handler.get_sensor_data(),
-        )
 
     def _check_finished(self):
         # Check if two devices are terminated
@@ -102,3 +101,54 @@ class PairDataSampler:
 
     def on_device2_terminated(self, sensor_name: str):
         self.device2_finished = True
+
+    def get_data(self) -> tuple[pd.DataFrame, pd.DataFrame]:
+        if not (self.device1_finished and self.device2_finished):
+            raise ValueError("Data sampling is not finished")
+
+        return (
+            self.device1_handler.get_sensor_data(),
+            self.device2_handler.get_sensor_data(),
+        )
+
+    def output_sampling_data(
+        self,
+        output_dir_path: str,
+        remark: str = "",
+    ):
+        if not (self.device1_finished and self.device2_finished):
+            raise ValueError("Data sampling is not finished")
+
+        if not os.path.exists(output_dir_path):
+            os.makedirs(output_dir_path)
+
+        formatted_date = self.start_date.strftime("%Y%m%d%H%M%S")
+        device1_data_filename = f"{formatted_date}_{self.device1_name}.csv"
+        device2_data_filename = f"{formatted_date}_{self.device2_name}.csv"
+        device1_data_output_path = os.path.join(output_dir_path, device1_data_filename)
+        device2_data_output_path = os.path.join(output_dir_path, device2_data_filename)
+
+        self.device1_data.to_csv(device1_data_output_path)
+        self.device2_data.to_csv(device2_data_output_path)
+
+        info_filename = "sensor_data_info.csv"
+        column = [
+            "start_date",
+            "user1_name",
+            "user1_data_path",
+            "user1_device_address",
+            "user2_name",
+            "user2_data_path",
+            "user2_device_address",
+            "remark",
+        ]
+        infofile_output_path = os.path.join(output_dir_path, info_filename)
+
+        info_text = f"{formatted_date},{self.device1_name},{device1_data_filename},{self.device1_address},{self.device2_name},{device2_data_filename},{self.device2_address},{remark}\n"
+        if os.path.exists(infofile_output_path):
+            with open(infofile_output_path, "a") as f:
+                f.write(info_text)
+        else:
+            with open(infofile_output_path, "w") as f:
+                f.write(",".join(column) + "\n")
+                f.write(info_text)
