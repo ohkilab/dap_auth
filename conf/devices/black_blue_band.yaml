@@ -1,0 +1,3 @@
+defaults:
+  - device@device1: black_band
+  - device@device2: blue_band

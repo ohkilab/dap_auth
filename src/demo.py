@@ -1,7 +1,10 @@
-from sampling.data_sampler import PairDataSampler, SamplingMode
+import hydra
+from omegaconf import DictConfig, OmegaConf
 
 import faulthandler
 import tracemalloc
+
+from sampling.data_sampler import PairDataSampler, SamplingMode
 
 
 def sampling(user1_name, user2_name, device1_address, device2_address):
@@ -20,15 +23,16 @@ def sampling(user1_name, user2_name, device1_address, device2_address):
     return device1_data, device2_data
 
 
-def main():
+@hydra.main(version_base=None, config_path="../conf", config_name="data_sampling")
+def main(cfg: DictConfig):
     print("plese input user1_name: ", end="")
     user1_name = input()
     print("plese input user2_name: ", end="")
     user2_name = input()
     # black band
-    device1_address = "A59901F2-0211-6282-AA8C-4858238B4AE0"
+    device1_address = cfg.devices.device1.address
     # blue band
-    device2_address = "F76B7A81-43CD-5515-B7C3-997B6847F307"
+    device2_address = cfg.devices.device2.address
 
     device1_data, device2_data = sampling(
         user1_name,
