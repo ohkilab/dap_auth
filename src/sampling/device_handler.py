@@ -170,6 +170,9 @@ class DemoDeviceHandler(BaseDeviceHandler):
         self.end_count = 0
 
     def updateData(self, device: DeviceModel):
+        if self.finished:
+            return
+
         super().updateData(device)
 
         # Conditional determination for individual motion segment extraction
