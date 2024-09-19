@@ -1,13 +1,19 @@
 import hydra
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
+
+import pandas as pd
 
 import faulthandler
 import tracemalloc
 
 from sampling.data_sampler import PairDataSampler, SamplingMode
+from preprocess.pair_data_extraction import pair_extraction
+from preprocess.util import removal_gravitational_acceleration
 
 
-def sampling(user1_name, user2_name, device1_address, device2_address):
+def sampling(
+    user1_name, user2_name, device1_address, device2_address
+) -> tuple[pd.DataFrame, pd.DataFrame]:
 
     sampler = PairDataSampler(
         user1_name,
@@ -18,9 +24,18 @@ def sampling(user1_name, user2_name, device1_address, device2_address):
     )
     sampler.run()
     device1_data, device2_data = sampler.get_data()
-    device1_data.to_csv(f"{user1_name}.csv")
-    device2_data.to_csv(f"{user2_name}.csv")
     return device1_data, device2_data
+
+
+def preprocessing(
+    device1_data: pd.DataFrame, device2_data: pd.DataFrame
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    extracted_device1_data, extracted_device2_data = pair_extraction(
+        device1_data, device2_data
+    )
+    rm_gravity_device1_data = removal_gravitational_acceleration(extracted_device1_data)
+    rm_gravity_device2_data = removal_gravitational_acceleration(extracted_device2_data)
+    return rm_gravity_device1_data, rm_gravity_device2_data
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="data_sampling")
@@ -34,6 +49,7 @@ def main(cfg: DictConfig):
     # blue band
     device2_address = cfg.devices.device2.address
 
+    # Sampling only in the operating section
     device1_data, device2_data = sampling(
         user1_name,
         user2_name,
