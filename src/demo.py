@@ -40,6 +40,10 @@ def main(cfg: DictConfig):
         device1_address,
         device2_address,
     )
+    # TODO: Pair data operating section alignment
+    # TODO: preprocessing ( Gravitational acceleration removal / Calculation of L2Norm )
+    # TODO: Feature Extraction
+    # TODO: authentication
 
 
 if __name__ == "__main__":
