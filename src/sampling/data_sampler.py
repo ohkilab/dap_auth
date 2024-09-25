@@ -130,8 +130,8 @@ class PairDataSampler:
 
         device1_data = self.device1_handler.get_sensor_data()
         device2_data = self.device2_handler.get_sensor_data()
-        device1_data.to_csv(device1_data_output_path)
-        device2_data.to_csv(device2_data_output_path)
+        device1_data.to_csv(device1_data_output_path, index=False)
+        device2_data.to_csv(device2_data_output_path, index=False)
 
         info_filename = "sensor_data_info.csv"
         column = [
