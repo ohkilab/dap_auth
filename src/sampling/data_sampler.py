@@ -123,8 +123,16 @@ class PairDataSampler:
             os.makedirs(output_dir_path)
 
         formatted_date = self.start_date.strftime("%Y%m%d%H%M%S")
+
+        pair_dir_name = f"{formatted_date}_{self.device1_name}_{self.device2_name}"
+        if not os.path.exists(os.path.join(output_dir_path, pair_dir_name)):
+            os.makedirs(pair_dir_name)
+
         device1_data_filename = f"{formatted_date}_{self.device1_name}.csv"
+        device1_data_filename = os.path.join(pair_dir_name, device1_data_filename)
         device2_data_filename = f"{formatted_date}_{self.device2_name}.csv"
+        device2_data_filename = os.path.join(pair_dir_name, device2_data_filename)
+
         device1_data_output_path = os.path.join(output_dir_path, device1_data_filename)
         device2_data_output_path = os.path.join(output_dir_path, device2_data_filename)
 
