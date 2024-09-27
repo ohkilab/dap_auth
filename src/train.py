@@ -148,7 +148,7 @@ def main(cfg: DictConfig):
     with open(
         os.path.join(
             output_dir_path,
-            f"{cfg.model.modelname}_{cfg.correct_user1}_and_{cfg.correct_user2}.yaml",
+            f"{cfg.model.modelname}_{cfg.correct_user1}_and_{cfg.correct_user2}.pickle",
         ),
         "wb",
     ) as f:
