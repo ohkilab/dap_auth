@@ -69,6 +69,9 @@ class PairDataDataset(BasePairDataset):
         return 0
 
     def __getitem__(self, idx):
+        if idx >= len(self):
+            raise IndexError("Index out of range")
+
         if idx != 0:
             data_info = self.dataset_info.iloc[idx % len(self)]
         else:
@@ -181,17 +184,29 @@ class MaeSoIndivisualDataset(BasePairDataset):
         return os.path.basename(os.path.dirname(path))
 
     def __getitem__(self, idx):
+        if idx >= len(self):
+            raise IndexError("Index out of range")
+
         if idx != 0:
             user1_file_path = self.user1_file_path_list[idx % len(self)]
             user2_file_path = self.user2_file_path_list[idx % len(self)]
         else:
             user1_file_path = self.user1_file_path_list[idx]
             user2_file_path = self.user2_file_path_list[idx]
+
+        if os.path.basename(os.path.basename(user1_file_path)) != os.path.basename(
+            os.path.basename(user2_file_path)
+        ):
+            raise ValueError("User data does not match")
+
         user1_sensor_data = pd.read_csv(user1_file_path)
         user2_sensor_data = pd.read_csv(user2_file_path)
 
         user1_id = self.path2id(user1_file_path)
         user2_id = self.path2id(user2_file_path)
+
+        if user1_id.split("_")[0] != user2_id.split("_")[0]:
+            raise ValueError("Pair id does not match")
 
         data_info = pd.Series(
             {
@@ -214,3 +229,11 @@ class MaeSoIndivisualDataset(BasePairDataset):
         ):
             return 1
         return 0
+
+
+if __name__ == "__main__":
+    path = "/Users/okanoshinkuu/Workspace/lab/dev/dap_auth/dap_auth_demo/data/tmp_data"
+    correct_pair_names = ("0_0", "0_1")
+    dataset = MaeSoIndivisualDataset(path, correct_pair_names)
+    for hoge in dataset:
+        print(type(hoge))
