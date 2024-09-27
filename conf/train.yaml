@@ -1,0 +1,7 @@
+defaults:
+  - devices: black_blue_band
+  - model: rf
+
+dataset_path: "/Users/okanoshinkuu/Workspace/lab/dev/dap_auth/dap_auth_demo/data/sensor_data/"
+correct_user1: !!null
+correct_user2: !!null
