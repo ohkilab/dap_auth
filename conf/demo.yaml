@@ -1,2 +1,3 @@
 defaults:
   - devices: black_blue_band
+  - model: demo
