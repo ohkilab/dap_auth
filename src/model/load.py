@@ -25,7 +25,15 @@ def validate_modeltype(modelname: str):
         raise ValueError("Invalid model type")
 
 
-def load_model(param_dict_path: str, target_modelname: str = "svm") -> object:
+def load_model(model_path: str, target_modelname: str = "svm") -> object:
+
+    if model_path:
+        try:
+            with open(model_path, "r") as f:
+                classifer = pickle.load(f)
+                return classifer
+        except FileNotFoundError:
+            raise FileNotFoundError("The parameter dictionary file does not exist")
 
     model = convert_modeltype(target_modelname)
 
@@ -37,13 +45,5 @@ def load_model(param_dict_path: str, target_modelname: str = "svm") -> object:
         classifer = LGBMClassifier()
     elif model == ModelType.XGB:
         classifer = XGBClassifier()
-
-    if param_dict_path:
-        try:
-            with open(param_dict_path, "r") as f:
-                loaded_params = json.load(f)
-                classifer.set_params(**loaded_params)
-        except FileNotFoundError:
-            raise FileNotFoundError("The parameter dictionary file does not exist")
 
     return classifer

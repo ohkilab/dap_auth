@@ -1,5 +1,6 @@
 import os
 import yaml
+import pickle
 
 import pandas as pd
 import hydra
@@ -64,10 +65,12 @@ def feature_extraction(
     return feat
 
 
-def train(cfg: DictConfig):
+def train(cfg: DictConfig, output_dir_path: str):
     classifier = load_model(cfg.model.param_dict_path, cfg.model.modelname)
     dataset = PairDataDataset(cfg.dataset_path, [cfg.correct_user1, cfg.correct_user2])
 
+    feat_df = pd.DataFrame()
+    label_list = list()
     for device1_data, device2_data, label, data_info in tqdm(dataset):
         # Calculation of statistical features
         device1_motion_data_list = split_sensor_data(device1_data)
@@ -86,21 +89,26 @@ def train(cfg: DictConfig):
             feat = feature_extraction(
                 preprocessed_device1_data, preprocessed_device2_data
             )
+            feat_df = pd.concat([feat_df, feat], axis=0)
+            label_list.append(label)
 
-        # Prediction
-        pred = classifier.predict(feat)
-        print(pred)
+    feat_df = feat_df.reset_index().drop("index", axis=1)
+    feat_df.to_csv(os.path.join(output_dir_path, "feat_df.csv"), index=False)
+    label_list = pd.Series(label_list)
+    label_list.to_csv(os.path.join(output_dir_path, "label_list.csv"), index=False)
+
+    classifier = load_model(cfg.model.param_dict_path, cfg.model.modelname)
+    classifier.fit(feat_df, label_list)
+    return classifier
 
 
-def old_data_format_train(cfg: DictConfig):
+def old_data_format_train(cfg: DictConfig, output_dir_path: str):
 
     dataset = MaeSoIndivisualDataset(
         cfg.dataset_path,
         [cfg.correct_user1, cfg.correct_user2],
         MaeSoDatasetMode.NORMAL,
     )
-
-    output_dir_path = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
 
     feat_df = pd.DataFrame()
     label_list = list()
@@ -122,8 +130,7 @@ def old_data_format_train(cfg: DictConfig):
 
     classifier = load_model(cfg.model.param_dict_path, cfg.model.modelname)
     classifier.fit(feat_df, label_list)
-    model_param = classifier.get_params()
-    return model_param
+    return classifier
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="train")
@@ -135,13 +142,19 @@ def main(cfg: DictConfig):
         cfg.correct_user2 is not None
     ), "Please specify correct_user2. how to use: correct_user2=xxx"
 
-    # model_param = train(cfg)
-    model_param = old_data_format_train(cfg)
+    output_dir_path = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
+
+    # model = train(cfg, output_dir_path)
+    model = old_data_format_train(cfg, output_dir_path)
 
     with open(
-        f"{cfg.model.modelname}_{cfg.correct_user1}_{cfg.correct_user2}.yaml", "w"
+        os.path.join(
+            output_dir_path,
+            f"{cfg.model.modelname}_{cfg.correct_user1}_and_{cfg.correct_user2}.yaml",
+        ),
+        "w",
     ) as f:
-        yaml.dump(model_param, f)
+        pickle.dump(model, f)
 
 
 if __name__ == "__main__":
