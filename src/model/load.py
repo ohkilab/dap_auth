@@ -29,7 +29,7 @@ def load_model(model_path: str, target_modelname: str = "svm") -> object:
 
     if model_path:
         try:
-            with open(model_path, "r") as f:
+            with open(model_path, "rb") as f:
                 classifer = pickle.load(f)
                 return classifer
         except FileNotFoundError:
