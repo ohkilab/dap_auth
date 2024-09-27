@@ -14,6 +14,45 @@ from .util.app_notifier import AppNotifierBase
 from .device_model import DeviceModel
 
 
+class MotionSegmentDeterminator:
+    def __init__(self):
+        self.threshold_for_gyro_l2norm = 35
+        self.max_times_to_cross_threshold = 25
+        self.finished = False
+        self.start_idx = None
+        self.end_idx = None
+        self.start_count = 0
+        self.end_count = 0
+
+    def updateData(self, current_gyro: List[float], sensor_data_idx: int):
+        # Conditional determination for individual motion segment extraction
+        gyro_l2norm = np.sqrt(np.sum(np.array(current_gyro) ** 2))
+        if self.start_idx is None:
+            if gyro_l2norm >= self.threshold_for_gyro_l2norm:
+                self.start_count += 1
+            else:
+                self.start_count = 0
+
+            if self.start_count == self.max_times_to_cross_threshold:
+                self.start_idx = sensor_data_idx - self.max_times_to_cross_threshold
+        else:
+            if gyro_l2norm <= self.threshold_for_gyro_l2norm:
+                self.end_count += 1
+            else:
+                self.end_count = 0
+
+            if self.end_count == self.max_times_to_cross_threshold:
+                self.end_idx = sensor_data_idx
+                self.finished = True
+
+    def clear(self):
+        self.finished = False
+        self.start_idx = None
+        self.end_idx = None
+        self.start_count = 0
+        self.end_count = 0
+
+
 class BaseDeviceHandler(AppNotifierBase):
     def __init__(
         self,
@@ -162,31 +201,18 @@ class DemoDeviceHandler(BaseDeviceHandler):
     ) -> None:
         super().__init__(app, name, device_adress, on_update, on_terminated)
         # Variables for Individual Motion Interval Extraction
-        self.finished = False
-        self.threshold_for_gyro_l2norm = 35
-        self.max_times_to_cross_threshold = 25
-        self.start_idx = None
-        self.start_count = 0
-        self.end_count = 0
+        self.motion_segment_determinator = MotionSegmentDeterminator()
 
     def updateData(self, device: DeviceModel):
-        if self.finished:
+        if self.motion_segment_determinator.finished:
             return
 
         super().updateData(device)
 
         # Conditional determination for individual motion segment extraction
-        gyro_l2norm = np.sqrt(np.sum(np.array(self.current_gyro) ** 2))
-        if self.start_idx is None:
-            if gyro_l2norm >= self.threshold_for_gyro_l2norm:
-                self.start_count += 1
-            if self.start_count == 25:
-                self.start_idx = len(self.sensor_data) - 1
-        else:
-            if gyro_l2norm <= self.threshold_for_gyro_l2norm:
-                self.end_count += 1
-            if self.end_count == 25:
-                self.finished = True
+        self.motion_segment_determinator.updateData(
+            self.current_gyro, len(self.sensor_data) - 1
+        )
 
-        if self.finished:
+        if self.motion_segment_determinator.finished:
             self.stop()
