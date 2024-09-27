@@ -38,7 +38,7 @@ def load_model(model_path: str, target_modelname: str = "svm") -> object:
     model = convert_modeltype(target_modelname)
 
     if model == ModelType.SVM:
-        classifer = SVC()
+        classifer = SVC(probability=True)
     elif model == ModelType.RF:
         classifer = RandomForestClassifier()
     elif model == ModelType.LGBM:
