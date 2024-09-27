@@ -3,6 +3,12 @@ from datetime import datetime
 
 
 def str2datetime(time: str) -> datetime:
+    # マイクロ秒の記述指定子%fは6桁までしか対応していないため整形する
+    if "." in time:
+        time_part, microsecond_part = time.split(".")
+        # マイクロ秒部分が6桁を超える場合は切り捨てる
+        microsecond_part = microsecond_part[:6].ljust(6, "0")  # 6桁に調整
+        time = f"{time_part}.{microsecond_part}"
     return datetime.strptime(time, "%Y-%m-%d %H:%M:%S.%f")
 
 
