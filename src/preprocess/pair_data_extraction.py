@@ -3,6 +3,8 @@ from datetime import datetime
 
 
 def str2datetime(time: str) -> datetime:
+    if type(time) is pd.Timestamp or type(time) is datetime:
+        return time
     # マイクロ秒の記述指定子%fは6桁までしか対応していないため整形する
     if "." in time:
         time_part, microsecond_part = time.split(".")
@@ -17,6 +19,7 @@ def search_near_time_idx(ref_time: datetime, df: pd.DataFrame) -> int:
     min_time_diff = None
     for df_idx in range(0, df.shape[0]):
         target_time = str2datetime(df["time"].iloc[df_idx])
+
         time_diff = abs(target_time - ref_time)
         if (min_time_diff is None) or (time_diff < min_time_diff):
             min_time_diff = time_diff
