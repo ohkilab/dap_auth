@@ -16,6 +16,7 @@ def wrap_extract_features(df: pd.DataFrame):
     selected_columns = [
         f"{header}__{stat}"
         for header in df.columns
+        if header != "id"
         for stat in ["maximum", "minimum", "median", "sample_entropy", "skewness"]
     ]
     feat = extract_features(
@@ -31,8 +32,9 @@ def wrap_extract_features(df: pd.DataFrame):
             "skewness": None,
         },
         kind_to_fc_parameters=None,
+        disable_progressbar=True,
     )
-    return feat[selected_columns], selected_columns
+    return feat[selected_columns]
 
 
 def calculate_extract_fusion_futures(
@@ -41,33 +43,32 @@ def calculate_extract_fusion_futures(
     mode: FusionMode,
 ) -> pd.DataFrame:
 
-    if "time" in pair_data_1.column:
-        pd1 = pair_data_1.drop(columns=["time"])
-    else:
-        pd1 = pair_data_1.copy
-
-    if "time" in pair_data_2.column:
-        pd2 = pair_data_2.drop(columns=["time"])
-    else:
-        pd2 = pair_data_2.copy
+    pd1 = pair_data_1.copy()
+    pd2 = pair_data_2.copy()
+    if "time" in pair_data_1.columns:
+        pd1 = pd1.drop(columns=["time"])
+    if "time" in pair_data_2.columns:
+        pd2 = pd2.drop(columns=["time"])
 
     # fusion before feature extraction
     if mode == FusionMode.DATA_MEAN:
         fusion_df = (pd1 + pd2) / 2
     elif mode == FusionMode.DATA_NORM:
-        fusion_df = np.sqrt(pd1**2 + pd2**2)
+        fusion_df = np.sqrt(pd1.applymap(lambda x: x**2) + pd2.applymap(lambda x: x**2))
 
     # feature extraction
     if mode == FusionMode.DATA_MEAN or mode == FusionMode.DATA_NORM:
         feature = wrap_extract_features(fusion_df)
     elif mode == FusionMode.FEATURE_MEAN or mode == FusionMode.FEATURE_NORM:
-        fusion_df1 = wrap_extract_features(pd1)
-        fusion_df2 = wrap_extract_features(pd2)
+        fusion_df1 = wrap_extract_features(pd1).reset_index().drop("index", axis=1)
+        fusion_df2 = wrap_extract_features(pd2).reset_index().drop("index", axis=1)
 
     # fusion after feature extraction
     if mode == FusionMode.FEATURE_MEAN:
         feature = (fusion_df1 + fusion_df2) / 2
     elif mode == FusionMode.FEATURE_NORM:
-        feature = np.sqrt(fusion_df1**2 + fusion_df2**2)
+        feature = np.sqrt(
+            fusion_df1.applymap(lambda x: x**2) + fusion_df2.applymap(lambda x: x**2)
+        )
 
     return feature
