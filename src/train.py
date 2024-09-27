@@ -7,10 +7,9 @@ import hydra
 from omegaconf import DictConfig
 from tqdm import tqdm
 
+from encapsulate_preprocess import preprocessing, feature_extraction
 from sampling.device_handler import MotionSegmentDeterminator
 from preprocess.pair_data_extraction import pair_extraction
-from preprocess.util import removal_gravitational_acceleration
-from feature.extract import standardization, triaxial_attributes_l2norm
 from feature.fusion import FusionMode, calculate_extract_fusion_futures
 from model.load import load_model
 from dataset.sensordata import PairDataDataset, MaeSoIndivisualDataset, MaeSoDatasetMode
@@ -28,41 +27,6 @@ def split_sensor_data(sensor_data: pd.DataFrame) -> list[pd.DataFrame]:
             df_list.append(sensor_data.iloc[start_idx:end_idx])
             segment_determinator.clear()
     return df_list
-
-
-def preprocessing(
-    device1_data: pd.DataFrame, device2_data: pd.DataFrame
-) -> tuple[pd.DataFrame, pd.DataFrame]:
-    extracted_device1_data, extracted_device2_data = pair_extraction(
-        device1_data, device2_data
-    )
-    rm_gravity_device1_data = removal_gravitational_acceleration(extracted_device1_data)
-    rm_gravity_device2_data = removal_gravitational_acceleration(extracted_device2_data)
-    return rm_gravity_device1_data, rm_gravity_device2_data
-
-
-def feature_extraction(
-    device1_data: pd.DataFrame, device2_data: pd.DataFrame
-) -> tuple[pd.DataFrame, pd.DataFrame]:
-
-    # Calculation of mid-level features
-    standard_device1_data = standardization(device1_data)
-    standard_device2_data = standardization(device2_data)
-    l2norm_device1_data = triaxial_attributes_l2norm(device1_data)
-    l2norm_device2_data = triaxial_attributes_l2norm(device2_data)
-
-    device_1_middle_feat = pd.concat(
-        [standard_device1_data, l2norm_device1_data], axis=1
-    )
-    device2_middle_feat = pd.concat(
-        [standard_device2_data, l2norm_device2_data], axis=1
-    )
-    # Calculation of final features
-    feat = calculate_extract_fusion_futures(
-        device_1_middle_feat, device2_middle_feat, FusionMode.FEATURE_MEAN
-    )
-
-    return feat
 
 
 def extract_feature(cfg: DictConfig):
