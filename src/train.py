@@ -152,7 +152,7 @@ def main(cfg: DictConfig):
             output_dir_path,
             f"{cfg.model.modelname}_{cfg.correct_user1}_and_{cfg.correct_user2}.yaml",
         ),
-        "w",
+        "wb",
     ) as f:
         pickle.dump(model, f)
 
