@@ -1,3 +1,4 @@
+import os
 import yaml
 
 import pandas as pd
@@ -99,6 +100,8 @@ def old_data_format_train(cfg: DictConfig):
         MaeSoDatasetMode.NORMAL,
     )
 
+    output_dir_path = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
+
     feat_df = pd.DataFrame()
     label_list = list()
     for device1_data, device2_data, label, data_info in tqdm(dataset):
@@ -110,6 +113,8 @@ def old_data_format_train(cfg: DictConfig):
         label_list.append(label)
 
     feat_df = feat_df.reset_index().drop("index", axis=1)
+    feat_df.to_csv(os.path.join(output_dir_path, "feat_df.csv"), index=False)
+
     classifier = load_model(cfg.model.param_dict_path, cfg.model.modelname)
     classifier.fit(feat_df, label_list)
     model_param = classifier.get_params()
