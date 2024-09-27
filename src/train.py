@@ -106,6 +106,9 @@ def old_data_format_train(cfg: DictConfig):
     label_list = list()
     for device1_data, device2_data, label, data_info in tqdm(dataset):
         # Calculation of statistical features
+        device1_data, device2_data = pair_extraction(
+            device1_data=device1_data, device2_data=device2_data
+        )
         feat = calculate_extract_fusion_futures(
             device1_data, device2_data, FusionMode.FEATURE_MEAN
         )
