@@ -114,6 +114,8 @@ def old_data_format_train(cfg: DictConfig):
 
     feat_df = feat_df.reset_index().drop("index", axis=1)
     feat_df.to_csv(os.path.join(output_dir_path, "feat_df.csv"), index=False)
+    label_list = pd.Series(label_list)
+    label_list.to_csv(os.path.join(output_dir_path, "label_list.csv"), index=False)
 
     classifier = load_model(cfg.model.param_dict_path, cfg.model.modelname)
     classifier.fit(feat_df, label_list)
