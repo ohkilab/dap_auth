@@ -12,7 +12,7 @@ def removal_gravitational_acceleration(
     removed_df = df.copy()
 
     for acc_column_name in acc_column_names:
-        removed_df.loc[acc_column_name] = high_pass_filter(
+        removed_df.loc[:, acc_column_name] = high_pass_filter(
             removed_df[acc_column_name].to_numpy(), alpha
         )
     return removed_df
