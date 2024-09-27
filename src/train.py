@@ -65,12 +65,12 @@ def feature_extraction(
     return feat
 
 
-def train(cfg: DictConfig, output_dir_path: str):
-    classifier = load_model(cfg.model.param_dict_path, cfg.model.modelname)
+def extract_feature(cfg: DictConfig):
     dataset = PairDataDataset(cfg.dataset_path, [cfg.correct_user1, cfg.correct_user2])
 
     feat_df = pd.DataFrame()
     label_list = list()
+    pair_list = list()
     for device1_data, device2_data, label, data_info in tqdm(dataset):
         # Calculation of statistical features
         device1_motion_data_list = split_sensor_data(device1_data)
@@ -91,18 +91,13 @@ def train(cfg: DictConfig, output_dir_path: str):
             )
             feat_df = pd.concat([feat_df, feat], axis=0)
             label_list.append(label)
+            pair_list.append((data_info["user1_name"], data_info["user2_name"]))
 
     feat_df = feat_df.reset_index().drop("index", axis=1)
-    feat_df.to_csv(os.path.join(output_dir_path, "feat_df.csv"), index=False)
-    label_list = pd.Series(label_list)
-    label_list.to_csv(os.path.join(output_dir_path, "label_list.csv"), index=False)
-
-    classifier = load_model(cfg.model.param_dict_path, cfg.model.modelname)
-    classifier.fit(feat_df, label_list)
-    return classifier
+    return feat_df, label_list, pair_list
 
 
-def old_data_format_train(cfg: DictConfig, output_dir_path: str):
+def extract_feature_from_old_data(cfg: DictConfig):
 
     dataset = MaeSoIndivisualDataset(
         cfg.dataset_path,
@@ -112,6 +107,7 @@ def old_data_format_train(cfg: DictConfig, output_dir_path: str):
 
     feat_df = pd.DataFrame()
     label_list = list()
+    pair_list = list()
     for device1_data, device2_data, label, data_info in tqdm(dataset):
         # Calculation of statistical features
         device1_data, device2_data = pair_extraction(
@@ -122,15 +118,10 @@ def old_data_format_train(cfg: DictConfig, output_dir_path: str):
         )
         feat_df = pd.concat([feat_df, feat], axis=0)
         label_list.append(label)
+        pair_list.append((data_info["user1_id"], data_info["user2_id"]))
 
     feat_df = feat_df.reset_index().drop("index", axis=1)
-    feat_df.to_csv(os.path.join(output_dir_path, "feat_df.csv"), index=False)
-    label_list = pd.Series(label_list)
-    label_list.to_csv(os.path.join(output_dir_path, "label_list.csv"), index=False)
-
-    classifier = load_model(cfg.model.param_dict_path, cfg.model.modelname)
-    classifier.fit(feat_df, label_list)
-    return classifier
+    return feat_df, label_list, pair_list
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="train")
@@ -144,8 +135,15 @@ def main(cfg: DictConfig):
 
     output_dir_path = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
 
-    # model = train(cfg, output_dir_path)
-    model = old_data_format_train(cfg, output_dir_path)
+    # feat, label_list, pair_list = extract_feature(cfg)
+    feat, label_list, pair_list = extract_feature_from_old_data(cfg)
+
+    feat.to_csv(os.path.join(output_dir_path, "feat_df.csv"), index=False)
+    pair_list = pd.Series(pair_list)
+    pair_list.to_csv(os.path.join(output_dir_path, "pair_list.csv"), index=False)
+
+    classifier = load_model(cfg.model.param_dict_path, cfg.model.modelname)
+    classifier.fit(feat, label_list)
 
     with open(
         os.path.join(
@@ -154,7 +152,7 @@ def main(cfg: DictConfig):
         ),
         "wb",
     ) as f:
-        pickle.dump(model, f)
+        pickle.dump(classifier, f)
 
 
 if __name__ == "__main__":
