@@ -15,7 +15,7 @@ def triaxial_attributes_l2norm(
     df: pd.DataFrame, triaxial_attributes_colnames=["acc", "gyro"]
 ) -> pd.DataFrame:
     triaxial_label = ["X", "Y", "Z"]
-    triaxial_l2norm_labels = [l + "_l2norm" for l in triaxial_attributes_colnames]
+    triaxial_l2norm_labels = [l + "_mag" for l in triaxial_attributes_colnames]
 
     l2norm = np.zeros((len(triaxial_attributes_colnames), len(df)))
 
