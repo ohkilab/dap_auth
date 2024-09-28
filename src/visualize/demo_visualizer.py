@@ -23,7 +23,8 @@ class DemoSite:
         self.register_callbacks()
 
     def run(self):
-        self.app.run_server(debug=True)
+        # self.app.run_server(debug=True)
+        self.app.run_server()
 
     def init_page(self):
         self.state = DemoPageStat.SAMPLING
