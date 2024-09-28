@@ -1,9 +1,9 @@
 import os
-
-import pandas as pd
-
+from typing import List, Callable
 from enum import Enum
 from datetime import datetime
+
+import pandas as pd
 
 from .util.app import App
 from .device_handler import BaseDeviceHandler, DemoDeviceHandler
@@ -22,6 +22,16 @@ class PairDataSampler:
         device1_address: str,
         device2_address: str,
         mode: SamplingMode = SamplingMode.SAMPLING,
+        on_update: Callable[
+            [
+                List[float],
+                List[float],
+                List[float],
+                List[float],
+            ],
+            None,
+        ] = None,
+        on_terminated: Callable[[], None] = None,
     ):
         self.app = App()
         self.device1_name = device1_name
@@ -29,6 +39,8 @@ class PairDataSampler:
         self.device1_address = device1_address
         self.device2_address = device2_address
         self.mode = mode
+        self.on_update = on_update
+        self.on_terminated = on_terminated
 
         self.start_date = None
 
@@ -78,6 +90,9 @@ class PairDataSampler:
             if not self.device2_finished:
                 self.device2_handler.stop()
 
+        if self.on_terminated is not None:
+            self.on_terminated()
+
     def _check_finished(self):
         # Check if two devices are terminated
         if self.device1_finished and self.device2_finished:
@@ -94,7 +109,8 @@ class PairDataSampler:
         angle: list[float],
         mag: list[float],
     ):
-        pass
+        if self.on_update is not None:
+            self.on_update(sensor_name, time, acc, gyro, angle, mag)
 
     def on_device1_terminated(self, sensor_name: str):
         self.device1_finished = True
