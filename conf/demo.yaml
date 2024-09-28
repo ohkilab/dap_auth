@@ -1,3 +1,5 @@
 defaults:
   - devices: black_blue_band
   - model: demo
+
+pred_threshold: 0.6
