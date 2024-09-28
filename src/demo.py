@@ -71,6 +71,10 @@ def main(cfg: DictConfig):
 
     def on_device_terminate():
         visualizer.state = DemoPageStat.AUTHORIZE
+        visualizer.sampling_page.is_terminated = True
+
+    def on_authorization_complete(result):
+        visualizer.authorize_page.result = result
 
     sampler = PairDataSampler(
         user1_name,
@@ -82,12 +86,14 @@ def main(cfg: DictConfig):
         on_terminated=on_device_terminate,
     )
 
-    thread = Thread(target=authorize, args=(cfg, sampler))
+    thread = Thread(target=authorize, args=(cfg, sampler, on_authorization_complete))
     thread.start()
     visualizer.run()
 
 
-def authorize(cfg: DictConfig, sampler: PairDataSampler):
+def authorize(
+    cfg: DictConfig, sampler: PairDataSampler, on_authorization_complete: callable
+):
 
     sampler.run()
     device1_data, device2_data = sampler.get_data()
@@ -101,7 +107,9 @@ def authorize(cfg: DictConfig, sampler: PairDataSampler):
     pred = classifier.predict_proba(feat)[0]
     other_pred, target_pred = pred
 
-    if target_pred >= cfg.pred_threshold:
+    auth_result = target_pred >= cfg.pred_threshold
+    on_authorization_complete(auth_result)
+    if auth_result:
         print(f"authrized!")
     else:
         print(f"unauthrized...")
