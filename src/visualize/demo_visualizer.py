@@ -3,8 +3,10 @@ from enum import Enum
 import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output
+import dash_bootstrap_components as dbc
 
-from .sensor_page import SensorDataVisualizer
+from .page_sensor import SensorDataVisualizer
+from .page_authorize_result import AuthrizeResultVisualizer
 
 
 class DemoPageStat(Enum):
@@ -15,7 +17,7 @@ class DemoPageStat(Enum):
 class DemoSite:
     def __init__(self):
         # Dashアプリケーションの作成
-        self.app = dash.Dash(__name__)
+        self.app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
         self.init_page()
         # レイアウトの設定、データ更新関数の登録
         self.app_layout = self._create_layout()
@@ -30,9 +32,11 @@ class DemoSite:
         self.state = DemoPageStat.SAMPLING
         self.old_state = self.state
         self.sampling_page = SensorDataVisualizer()
+        self.authorize_page = AuthrizeResultVisualizer(False)
 
     def register_callbacks(self):
         self.sampling_page.register_callbacks(self.app)
+        self.authorize_page.register_callbacks(self.app)
 
         @self.app.callback(
             Output("page-content", "children"), Input("page_counter", "n_intervals")
@@ -46,7 +50,7 @@ class DemoSite:
             if self.state == DemoPageStat.SAMPLING:
                 return self.sampling_page.get_layout()
             elif self.state == DemoPageStat.AUTHORIZE:
-                return self.sampling_page.get_layout()
+                return self.authorize_page.get_layout()
             else:
                 return self.sampling_page.get_layout()
 
