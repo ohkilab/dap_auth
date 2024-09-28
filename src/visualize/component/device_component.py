@@ -7,9 +7,10 @@ import plotly.graph_objs as go
 
 
 class DeviceComponent:
-    def __init__(self, device_id: str, interval_id: str):
+    def __init__(self, device_id: str, parent_interval_id: str):
         self.device_id = device_id
-        self.interval_id = interval_id
+        self.interval_id = parent_interval_id
+        self.is_updated = False
         # Dashアプリケーションの作成
         # 表示項目やデータの初期化
         self.init_id_data()
@@ -63,6 +64,9 @@ class DeviceComponent:
         angle: list[float],
         mag: list[float],
     ):
+        if not self.is_updated:
+            self.is_updated = True
+
         self.x_data.append(self.x_data_idx)
         acc_l2 = np.linalg.norm(acc)
         angle_l2 = np.linalg.norm(angle)

@@ -6,6 +6,7 @@ from .component.device_component import DeviceComponent
 
 class SensorDataVisualizer:
     def __init__(self):
+        self.is_terminated = False
         # 表示項目やデータの初期化
         self.init_view_data()
         self.device1_graph_component = DeviceComponent("0", self.interval_id)
@@ -13,6 +14,7 @@ class SensorDataVisualizer:
         # レイアウトの設定、データ更新関数の登録
         self.layout = self._create_layout()
         # self.register_callbacks()
+        self.status_message = "sensor connecting..."
 
     def get_layout(self):
         return self.layout
@@ -31,6 +33,15 @@ class SensorDataVisualizer:
             [Input("sensor-vis-graph-update", "n_intervals")],
         )
         def update_status_message(n):
+            if (
+                self.device1_graph_component.is_updated
+                and self.device2_graph_component.is_updated
+            ):
+                self.status_message = "sensor connected"
+            if self.is_terminated:
+                self.status_message = (
+                    "data extraction for the operation section is complete"
+                )
             return self.status_message
 
     def _create_layout(self):
