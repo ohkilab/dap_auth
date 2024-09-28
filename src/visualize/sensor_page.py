@@ -8,8 +8,8 @@ class SensorDataVisualizer:
     def __init__(self):
         # 表示項目やデータの初期化
         self.init_view_data()
-        self.device1_graph_component = DeviceComponent("0")
-        self.device2_graph_component = DeviceComponent("1")
+        self.device1_graph_component = DeviceComponent("0", self.interval_id)
+        self.device2_graph_component = DeviceComponent("1", self.interval_id)
         # レイアウトの設定、データ更新関数の登録
         self.layout = self._create_layout()
         # self.register_callbacks()
@@ -20,6 +20,7 @@ class SensorDataVisualizer:
     def init_view_data(self):
         self.title = "Sensor Data Visualizer"
         self.status_message = "initializing..."
+        self.interval_id = "sensor-vis-graph-update"
 
     def register_callbacks(self, app):
         self.device1_graph_component.register_callbacks(app)
@@ -34,7 +35,9 @@ class SensorDataVisualizer:
 
     def _create_layout(self):
         graph1_layout = self.device1_graph_component.get_layout()
+        graph1_shard_store = graph1_layout[2]
         graph2_layout = self.device2_graph_component.get_layout()
+        graph2_shard_store = graph2_layout[2]
         return html.Div(
             style={
                 "height": "100vh",
@@ -66,8 +69,10 @@ class SensorDataVisualizer:
                         graph2_layout[1],
                     ],
                 ),
+                graph1_shard_store,
+                graph2_shard_store,
                 dcc.Interval(
-                    id="sensor-vis-graph-update", interval=1000, n_intervals=0
+                    id=self.interval_id, interval=1000, n_intervals=0
                 ),  # 1秒ごとに更新
                 html.Div(
                     id="status-message",

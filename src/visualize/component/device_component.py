@@ -7,8 +7,9 @@ import plotly.graph_objs as go
 
 
 class DeviceComponent:
-    def __init__(self, device_id: str):
+    def __init__(self, device_id: str, interval_id: str):
         self.device_id = device_id
+        self.interval_id = interval_id
         # Dashアプリケーションの作成
         # 表示項目やデータの初期化
         self.init_id_data()
@@ -24,6 +25,7 @@ class DeviceComponent:
         self.device_name = f"device{self.device_id}"
         self.graph1_id = self.device_name + "-graph1"
         self.graph2_id = self.device_name + "-graph2"
+        self.shared_store_id = self.device_name + "-shared-data-store"
 
     def init_view_data(self):
 
@@ -77,31 +79,44 @@ class DeviceComponent:
     def register_callbacks(self, app):
 
         @app.callback(
-            Output(self.graph1_id, "figure"),
-            [Input("sensor-vis-graph-update", "n_intervals")],
+            Output(self.shared_store_id, "data"),
+            [Input(self.interval_id, "n_intervals")],
         )
-        def update_graph_1(n):
+        def update_data_store(n):
+            return {
+                "x_data": list(self.x_data),
+                "graph1_data1": list(self.graph1_data1),
+                "graph1_data2": list(self.graph1_data2),
+                "graph1_data3": list(self.graph1_data3),
+                "graph2_data": list(self.graph2_data),
+            }
+
+        @app.callback(
+            Output(self.graph1_id, "figure"),
+            [Input(self.shared_store_id, "data")],
+        )
+        def update_graph_1(data):
             fig = go.Figure()
             fig.add_trace(
                 go.Scatter(
-                    x=list(self.x_data),
-                    y=list(self.graph1_data1),
+                    x=data["x_data"],
+                    y=data["graph1_data1"],
                     mode="lines",
                     name=self.graph1_data1_label,
                 )
             )
             fig.add_trace(
                 go.Scatter(
-                    x=list(self.x_data),
-                    y=list(self.graph1_data2),
+                    x=data["x_data"],
+                    y=data["graph1_data2"],
                     mode="lines",
                     name=self.graph1_data2_label,
                 )
             )
             fig.add_trace(
                 go.Scatter(
-                    x=list(self.x_data),
-                    y=list(self.graph1_data3),
+                    x=data["x_data"],
+                    y=data["graph1_data3"],
                     mode="lines",
                     name=self.graph1_data3_label,
                 )
@@ -116,14 +131,14 @@ class DeviceComponent:
 
         @app.callback(
             Output(self.graph2_id, "figure"),
-            [Input("sensor-vis-graph-update", "n_intervals")],
+            [Input(self.shared_store_id, "data")],
         )
-        def update_graph_2(n):
+        def update_graph_2(data):
             fig = go.Figure()
             fig.add_trace(
                 go.Scatter(
-                    x=list(self.x_data),
-                    y=list(self.graph2_data),
+                    x=data["x_data"],
+                    y=data["graph2_data"],
                     mode="lines",
                     name=self.graph2_title,
                 )
@@ -146,4 +161,5 @@ class DeviceComponent:
                 id=self.graph2_id,
                 config={"responsive": True},
             ),
+            dcc.Store(id=self.shared_store_id),
         )
