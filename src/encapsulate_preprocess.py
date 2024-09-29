@@ -55,7 +55,7 @@ def extract_feature_from_old_data(cfg: DictConfig):
 
     dataset = MaeSoIndivisualDataset(
         cfg.dataset_path,
-        [cfg.correct_user1, cfg.correct_user2],
+        (cfg.correct_user1, cfg.correct_user2),
         MaeSoDatasetMode.NORMAL,
     )
 
