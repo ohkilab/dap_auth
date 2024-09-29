@@ -1,0 +1,7 @@
+defaults:
+  - model: demo
+
+dataset_path: "/Users/okanoshinkuu/Workspace/lab/dev/dap_auth/dap_auth_demo/data/maeda_sensor_data/"
+pred_threshold: 0.6
+correct_user1: !!null
+correct_user2: !!null
