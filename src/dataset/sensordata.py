@@ -1,8 +1,9 @@
 import os
+import random
 from enum import Enum
 from glob import glob
-import random
 
+import numpy as np
 import pandas as pd
 
 
@@ -92,6 +93,10 @@ class PairDataDataset(BasePairDataset):
 
         return user1_sensor_data, user2_sensor_data, label, data_info
 
+    def get_all_pair_name(self):
+        pair_array = (self.dataset_info.loc[:, ["user1_name", "user2_name"]],)
+        return np.unique(pair_array)
+
 
 class MaeSoDatasetMode(Enum):
     NORMAL = 0
@@ -104,11 +109,15 @@ class MaeSoIndivisualDataset(BasePairDataset):
     def __init__(
         self,
         directory_path: str,
-        correct_pair_names: tuple[str, str],
+        correct_pair_names: tuple[str, str] = None,
         scenario_mode: MaeSoDatasetMode = MaeSoDatasetMode.NORMAL,
         is_train: bool = True,
     ):
-        self.correct_pair_names = correct_pair_names
+        # When correct_pair_names is None, this dataset returns the pair labels rather than the correct/incorrect labels.
+        if correct_pair_names == (None, None):
+            self.correct_pair_names = None
+        else:
+            self.correct_pair_names = correct_pair_names
         self.scenario_mode = scenario_mode
         self.is_train = is_train
 
@@ -125,6 +134,7 @@ class MaeSoIndivisualDataset(BasePairDataset):
 
         self.user1_file_path_list = []
         self.user2_file_path_list = []
+        self.pair_id_list = []
 
         mode_directory_path = os.path.join(
             directory_path, self.scenario_mode.name.lower()
@@ -251,6 +261,7 @@ class MaeSoIndivisualDataset(BasePairDataset):
 
             self.user1_file_path_list += user1_file_path_list
             self.user2_file_path_list += user2_file_path_list
+            self.pair_id_list += [pair_id for _ in user1_file_path_list]
 
         train_test_split_info.to_csv(self.train_test_idx_ref_file_path, index=False)
 
@@ -267,6 +278,9 @@ class MaeSoIndivisualDataset(BasePairDataset):
         return len(self.user1_file_path_list)
 
     def _validate_correct_pair_names(self):
+        if self.correct_pair_names is None:
+            return
+
         def df_contain_name(df, name):
             return name in df.loc[:, "id"].values
 
@@ -307,11 +321,14 @@ class MaeSoIndivisualDataset(BasePairDataset):
         user1_id = self.path2id(user1_file_path)
         user2_id = self.path2id(user2_file_path)
 
-        if user1_id.split("_")[0] != user2_id.split("_")[0]:
+        if not (
+            user1_id.split("_")[0] == user2_id.split("_")[0] == self.pair_id_list[idx]
+        ):
             raise ValueError("Pair id does not match")
 
         data_info = pd.Series(
             {
+                "pair_id": self.pair_id_list[idx],
                 "user1_id": user1_id,
                 "user2_id": user2_id,
                 "user1_data_path": user1_file_path,
@@ -323,6 +340,9 @@ class MaeSoIndivisualDataset(BasePairDataset):
         return user1_sensor_data, user2_sensor_data, label, data_info
 
     def _get_label(self, data_info: pd.Series) -> int:
+        if self.correct_pair_names is None:
+            return data_info["pair_id"]
+
         user1_id = data_info["user1_id"]
         user2_id = data_info["user2_id"]
 
@@ -331,3 +351,6 @@ class MaeSoIndivisualDataset(BasePairDataset):
         ):
             return 1
         return 0
+
+    def get_all_pair_name(self):
+        return list(set(self.pair_id_list))
