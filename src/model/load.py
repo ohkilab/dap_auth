@@ -1,5 +1,5 @@
 from enum import Enum
-import json
+from typing import Union
 
 import pickle
 from sklearn.svm import SVC
@@ -25,7 +25,9 @@ def validate_modeltype(modelname: str):
         raise ValueError("Invalid model type")
 
 
-def load_model(model_path: str, target_modelname: str = "svm") -> object:
+def load_model(
+    model_path: str, target_modelname: Union[str, ModelType] = "svm"
+) -> object:
 
     if model_path:
         try:
@@ -35,15 +37,18 @@ def load_model(model_path: str, target_modelname: str = "svm") -> object:
         except FileNotFoundError:
             raise FileNotFoundError("The parameter dictionary file does not exist")
 
-    model = convert_modeltype(target_modelname)
+    if type(target_modelname) != ModelType:
+        model_type = convert_modeltype(target_modelname)
+    else:
+        model_type = target_modelname
 
-    if model == ModelType.SVM:
+    if model_type == ModelType.SVM:
         classifer = SVC(probability=True)
-    elif model == ModelType.RF:
+    elif model_type == ModelType.RF:
         classifer = RandomForestClassifier()
-    elif model == ModelType.LGBM:
+    elif model_type == ModelType.LGBM:
         classifer = LGBMClassifier()
-    elif model == ModelType.XGB:
+    elif model_type == ModelType.XGB:
         classifer = XGBClassifier()
 
     return classifer
