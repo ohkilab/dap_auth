@@ -107,11 +107,13 @@ def test(cfg: DictConfig) -> None:
     all_thr = []
 
     for correct_pair_id in pair_id_list:
-        train_label_list = [1 if i == correct_pair_id else 0 for i in train_pair_list]
+        target_train_label_list = [
+            1 if i == correct_pair_id else 0 for i in train_label_list
+        ]
         # svm_classifier = load_model(None, ModelType.SVM)
         # svm_classifier.fit(feat_df, label_list)
         rf_classifier = load_model(None, ModelType.RF)
-        rf_classifier.fit(train_feat_df, train_label_list)
+        rf_classifier.fit(train_feat_df, target_train_label_list)
         # lgbm_classifier = load_model(None, ModelType.LGBM)
         # lgbm_classifier.fit(feat_df, label_list)
         # xgb_classifier = load_model(None, ModelType.XGB)
@@ -121,7 +123,7 @@ def test(cfg: DictConfig) -> None:
             rf_classifier,
             correct_pair_id,
             test_feat_df,
-            test_label_list,
+            _label_list,
             all_fpr,
             all_tpr,
             all_fnr,
