@@ -25,20 +25,23 @@ def feature_extraction(
     device1_data: pd.DataFrame, device2_data: pd.DataFrame
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
 
-    # Calculation of mid-level features
-    standard_device1_data = standardization(device1_data.drop("time", axis=1))
-    standard_device2_data = standardization(device2_data.drop("time", axis=1))
-    standard_device1_data.columns = device1_data.columns[1:]
-    standard_device2_data.columns = device2_data.columns[1:]
     l2norm_device1_data = triaxial_attributes_l2norm(device1_data)
     l2norm_device2_data = triaxial_attributes_l2norm(device2_data)
 
+    # index列を揃えてconcat
     device1_middle_feat = pd.concat(
-        [standard_device1_data, l2norm_device1_data], axis=1
-    )
+        [device1_data.reset_index(), l2norm_device1_data], axis=1
+    ).iloc[:, 1:]
     device2_middle_feat = pd.concat(
-        [standard_device2_data, l2norm_device2_data], axis=1
-    )
+        [device2_data.reset_index(), l2norm_device2_data], axis=1
+    ).iloc[:, 1:]
+
+    # Calculation of mid-level features
+    standard_device1_data = standardization(device1_middle_feat.drop("time", axis=1))
+    standard_device2_data = standardization(device2_middle_feat.drop("time", axis=1))
+    standard_device1_data.columns = device1_middle_feat.columns[1:]
+    standard_device2_data.columns = device2_middle_feat.columns[1:]
+
     # groupbyで特徴量算出するため参照列を追加する
     # 別々に特徴量算出するためidはダミー列
     device1_middle_feat["id"] = 0
