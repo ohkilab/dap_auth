@@ -127,7 +127,7 @@ def test(cfg: DictConfig) -> None:
             rf_classifier,
             correct_pair_id,
             test_feat_df,
-            _label_list,
+            test_label_list,
             all_fpr,
             all_tpr,
             all_fnr,
