@@ -97,6 +97,10 @@ def test(cfg: DictConfig) -> None:
     test_feat_df, test_label_list, test_pair_list = extract_feature_from_old_data(
         cfg, is_train=False
     )
+    if set(train_label_list) != set(test_label_list):
+        raise ValueError(
+            f"The values that can be taken during study and testing do not match.: train: {list(set(train_label_list))}, test:{list(set(test_label_list))}"
+        )
 
     pair_id_list = list(set(train_label_list))
 
