@@ -164,7 +164,12 @@ class BaseDeviceHandler(AppNotifierBase):
         self.sensor_data = np.vstack([self.sensor_data, row])
 
     def get_sensor_data(self):
-        df = pd.DataFrame(self.sensor_data, columns=self.sensor_data_labels)
+        time_data = self.sensor_data[:, 0]
+        float_data = self.sensor_data[:, 1:].astype(float)
+        # self.sensor_dataはdatetime型とfloat型が混在しているため、float型がobject型にキャストされてしまう
+        # よってdataframe変換時にリキャストする
+        df = pd.DataFrame(float_data, columns=self.sensor_data_labels[1:])
+        df.insert(0, self.sensor_data_basic_labels[0], time_data)
         return df
 
     def start(self):
@@ -216,3 +221,11 @@ class DemoDeviceHandler(BaseDeviceHandler):
 
         if self.motion_segment_determinator.finished:
             self.stop()
+
+    def get_sensor_data(self):
+        df = super().get_sensor_data()
+        extract_df = df.iloc[
+            self.motion_segment_determinator.start_idx : self.motion_segment_determinator.end_idx,
+            :,
+        ]
+        return extract_df
