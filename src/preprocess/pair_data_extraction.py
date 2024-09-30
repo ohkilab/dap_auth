@@ -38,10 +38,10 @@ def pair_extraction(
     end_idx1 = device1_data.shape[0]
     end_idx2 = device2_data.shape[0]
 
-    start_time1 = str2datetime(device1_data["time"].iloc[0,])
-    start_time2 = str2datetime(device2_data["time"].iloc[0,])
-    end_time1 = str2datetime(device1_data["time"].iloc[-1,])
-    end_time2 = str2datetime(device2_data["time"].iloc[-1,])
+    start_time1 = str2datetime(device1_data.loc[:, "time"].iloc[0])
+    start_time2 = str2datetime(device2_data.loc[:, "time"].iloc[0])
+    end_time1 = str2datetime(device1_data.loc[:, "time"].iloc[-1])
+    end_time2 = str2datetime(device2_data.loc[:, "time"].iloc[-1])
 
     # 開始時間を遅い方のデバイスに合わせる
     if start_time1 > start_time2:
