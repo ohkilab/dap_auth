@@ -67,11 +67,30 @@ def extract_feature_from_old_data(cfg: DictConfig):
     pair_list = list()
     for device1_data, device2_data, label, data_info in tqdm(dataset):
         # Calculation of statistical features
-        device1_data, device2_data = pair_extraction(
+        device1_extracted_data, device2_extracted_data = pair_extraction(
             device1_data=device1_data, device2_data=device2_data
         )
+
+        # Calculation of mid-level features
+        standard_device1_data = standardization(
+            device1_extracted_data.drop("time", axis=1).drop("id", axis=1)
+        )
+        standard_device2_data = standardization(
+            device2_extracted_data.drop("time", axis=1).drop("id", axis=1)
+        )
+        standard_device1_data.columns = [
+            c for c in device1_extracted_data.columns if (c != "time") and (c != "id")
+        ]
+        standard_device2_data.columns = [
+            c for c in device2_extracted_data.columns if (c != "time") and (c != "id")
+        ]
+        # groupbyで特徴量算出するため参照列を追加する
+        # 別々に特徴量算出するためidはダミー列
+        standard_device1_data["id"] = 0
+        standard_device2_data["id"] = 0
+
         feat = calculate_extract_fusion_futures(
-            device1_data, device2_data, FusionMode.FEATURE_MEAN
+            standard_device1_data, standard_device2_data, FusionMode.FEATURE_MEAN
         )
         feat_df = pd.concat([feat_df, feat], axis=0)
         label_list.append(label)
