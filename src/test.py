@@ -114,6 +114,9 @@ def test(cfg: DictConfig) -> None:
         target_train_label_list = [
             1 if i == correct_pair_id else 0 for i in train_label_list
         ]
+        target_test_label_list = [
+            1 if i == correct_pair_id else 0 for i in test_label_list
+        ]
         # svm_classifier = load_model(None, ModelType.SVM)
         # svm_classifier.fit(feat_df, label_list)
         rf_classifier = load_model(None, ModelType.RF)
@@ -127,7 +130,7 @@ def test(cfg: DictConfig) -> None:
             rf_classifier,
             correct_pair_id,
             test_feat_df,
-            test_label_list,
+            target_test_label_list,
             all_fpr,
             all_tpr,
             all_fnr,
