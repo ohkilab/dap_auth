@@ -54,12 +54,13 @@ def feature_extraction(
     return feat
 
 
-def extract_feature_from_old_data(cfg: DictConfig):
+def extract_feature_from_old_data(cfg: DictConfig, is_train=True):
 
     dataset = MaeSoIndivisualDataset(
         cfg.dataset_path,
         (cfg.correct_user1, cfg.correct_user2),
         MaeSoDatasetMode.NORMAL,
+        is_train,
     )
 
     feat_df = pd.DataFrame()
