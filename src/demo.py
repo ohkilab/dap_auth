@@ -11,6 +11,13 @@ from sampling.data_sampler import PairDataSampler, SamplingMode
 from encapsulate_preprocess import preprocessing, feature_extraction
 from model.load import load_model
 from visualize.demo_visualizer import DemoSite, DemoPageStat
+import logging
+
+# DashのログレベルをWARNING以上のレベルで抑制
+logging.getLogger("dash").setLevel(logging.WARNING)
+logging.getLogger("werkzeug").setLevel(
+    logging.WARNING
+)  # Dash内部のHTTPサーバ（werkzeug）のログも抑制
 
 
 def sampling(
