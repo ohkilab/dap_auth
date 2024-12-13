@@ -2,4 +2,5 @@ defaults:
   - devices: black_blue_band
   - model: demo
 
-pred_threshold: 0.6
+output_dir_path: data/sensor_data
+pred_threshold: 0.8
