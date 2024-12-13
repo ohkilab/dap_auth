@@ -46,10 +46,9 @@ def sampling(
 @hydra.main(version_base=None, config_path="../conf", config_name="demo")
 def main(cfg: DictConfig):
 
-    print("plese input user1_name: ", end="")
-    user1_name = input()
-    print("plese input user2_name: ", end="")
-    user2_name = input()
+    user1_name = "demo1"
+    user2_name = "demo2"
+
     # black band
     device1_address = cfg.devices.device1.address
     # blue band
