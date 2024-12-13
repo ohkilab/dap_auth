@@ -22,6 +22,21 @@ class DeviceComponent:
     def get_layout(self):
         return self.app_layout
 
+    def clear_page(self):
+        self.is_updated = False
+        self.x_data = deque(maxlen=self.max_data_length)
+        self.graph1_data1 = deque(maxlen=self.max_data_length)
+        self.graph1_data2 = deque(maxlen=self.max_data_length)
+        self.graph1_data3 = deque(maxlen=self.max_data_length)
+        self.graph2_data = deque(maxlen=self.max_data_length)
+        for i in range(self.max_data_length):
+            self.x_data.append(i)
+            self.graph1_data1.append(0)
+            self.graph1_data2.append(0)
+            self.graph1_data3.append(0)
+            self.graph2_data.append(0)
+            self.x_data_idx += 1
+
     def init_id_data(self):
         self.device_name = f"device{self.device_id}"
         self.graph1_id = self.device_name + "-graph1"

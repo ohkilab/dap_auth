@@ -24,6 +24,11 @@ class SensorDataVisualizer:
         self.status_message = "initializing..."
         self.interval_id = "sensor-vis-graph-update"
 
+    def clear_page(self):
+        self.device1_graph_component.clear_page()
+        self.device2_graph_component.clear_page()
+        self.status_message = "sensor connecting..."
+
     def register_callbacks(self, app):
         self.device1_graph_component.register_callbacks(app)
         self.device2_graph_component.register_callbacks(app)

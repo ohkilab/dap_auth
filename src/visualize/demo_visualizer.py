@@ -34,6 +34,10 @@ class DemoSite:
         self.sampling_page = SensorDataVisualizer()
         self.authorize_page = AuthrizeResultVisualizer(False)
 
+    def clear_page(self):
+        self.sampling_page.clear_page()
+        self.authorize_page.clear_page()
+
     def register_callbacks(self):
         self.sampling_page.register_callbacks(self.app)
         self.authorize_page.register_callbacks(self.app)
@@ -50,7 +54,8 @@ class DemoSite:
             if self.state == DemoPageStat.SAMPLING:
                 return self.sampling_page.get_layout()
             elif self.state == DemoPageStat.AUTHORIZE:
-                return self.authorize_page.get_layout()
+                self.sampling_page.status_message = "Authorization completed"
+                # return self.authorize_page.get_layout()
             else:
                 return self.sampling_page.get_layout()
 
