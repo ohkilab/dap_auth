@@ -1,2 +1,2 @@
 modelname: rf
-param_dict_path: "weight/rf_0_0_and_0_1/rf_0_0_and_0_1.pickle"
+param_dict_path: "weight/rf_None_and_None.pickle"
